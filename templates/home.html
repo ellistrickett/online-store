@@ -1,0 +1,15 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Online Store</title>
+</head>
+<body>
+    <h1>Welcome to the Online Store</h1>
+    {% if store_status %}
+        <p>Store status: {{ store_status }}</p>
+    {% else %}
+        <p>Welcome! Catalog coming soon.</p>
+    {% endif %}
+</body>
+</html>
