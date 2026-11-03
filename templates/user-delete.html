@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Delete User</title>
+</head>
+<body>
+
+    <h1>Delete User</h1>
+    <p>Are you sure you want to delete this user?</p>
+
+    <ul>
+        <li>ID: {{ user.user_id }}</li>
+        <li>Email: {{ user.email }}</li>
+        <li>First Name: {{ user.first_name }}</li>
+        <li>Last Name: {{ user.last_name }}</li>
+    </ul>
+
+    <button id="delete-button">Delete User</button>
+    <p id="message"></p>
+
+    <script>
+        const deleteButton = document.getElementById("delete-button");
+        const message = document.getElementById("message");
+
+        deleteButton.addEventListener("click", async function () {
+            const confirmed = confirm("Are you sure you want to delete this user?");
+            if (!confirmed) {
+                return;
+            }
+
+            const response = await fetch(
+                "/users/{{ user.user_id }}",
+                {
+                    method: "DELETE"
+                }
+            );
+
+            const data = await response.json();
+
+            if (response.ok) {
+                message.textContent = data.message;
+                deleteButton.disabled = true;
+            } else {
+                message.textContent = data.message || "An error occurred.";
+            }
+        });
+    </script>
+
+</body>
+</html>

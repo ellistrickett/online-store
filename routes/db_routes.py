@@ -126,7 +126,6 @@ def get_user_by_id(user_id):
 def update_user_by_id(user_id):
     """Display or update a user's details by ID."""
     if request.method == "GET":
-        # 1. Fetch current user from database
         stmt = "SELECT user_id, email, password_hash, first_name, last_name FROM users WHERE user_id = %s;"
         with get_connection() as conn:
             with conn.cursor() as cur:
@@ -136,7 +135,6 @@ def update_user_by_id(user_id):
         if row is None:
             return "User not found", 404
 
-        # 2. Map row to dictionary
         user = {
             "user_id": row[0],
             "email": row[1],
@@ -145,7 +143,6 @@ def update_user_by_id(user_id):
             "last_name": row[4]
         }
 
-        # 3. Pass 'user=user' into the template
         return render_template("user-update.html", user=user)
 
     # Handle PUT request
@@ -186,3 +183,57 @@ def update_user_by_id(user_id):
     }
 
     return jsonify(updated_user), 200
+
+@db_bp.route("/users/<int:user_id>/delete", methods=["GET"])
+def delete_user_page(user_id):
+    """Display the delete confirmation page for a user (Section L)."""
+    stmt = """
+        SELECT user_id, email, password_hash, first_name, last_name 
+        FROM users 
+        WHERE user_id = %s;
+    """
+
+    with get_connection() as conn:
+        with conn.cursor() as cur:
+            cur.execute(stmt, (user_id,))
+            row = cur.fetchone()
+
+    if row is None:
+        return "User not found", 404
+
+    user = {
+        "user_id": row[0],
+        "email": row[1],
+        "password_hash": row[2],
+        "first_name": row[3],
+        "last_name": row[4]
+    }
+
+    return render_template("user-delete.html", user=user)
+
+
+@db_bp.route("/users/<int:user_id>", methods=["DELETE"])
+def delete_user(user_id):
+    """Delete a user record from the database by ID using the DELETE method (Section M)."""
+    stmt = """
+        DELETE FROM users 
+        WHERE user_id = %s 
+        RETURNING user_id, email;
+    """
+
+    with get_connection() as conn:
+        with conn.cursor() as cur:
+            cur.execute(stmt, (user_id,))
+            row = cur.fetchone()
+        conn.commit()
+
+    if row is None:
+        return jsonify({
+            "message": "User not found."
+        }), 404
+
+    return jsonify({
+        "message": "The user has been deleted.",
+        "user_id": row[0],
+        "email": row[1]
+    }), 200
