@@ -61,3 +61,33 @@ def register_user_bypost():
 
     except Exception as e:
         return jsonify({"error": str(e)}), 500
+
+@db_bp.route("/users", methods=["GET"])
+def get_users():
+    """Retrieve all user records from the PostgreSQL users table."""
+    stmt = """
+        SELECT user_id, email, password_hash, first_name, last_name, created_at
+        FROM users
+        ORDER BY user_id;
+    """
+
+    with get_connection() as conn:
+        with conn.cursor() as cur:
+            cur.execute(stmt)
+            rows = cur.fetchall()
+
+    if not rows:
+        return jsonify({"query result": "No users found"}), 404
+
+    users = []
+    for row in rows:
+        users.append({
+            "user_id": row[0],
+            "email": row[1],
+            "password_hash": row[2],
+            "first_name": row[3],
+            "last_name": row[4],
+            "created_at": row[5]
+        })
+
+    return jsonify(users), 200
