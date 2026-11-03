@@ -91,3 +91,33 @@ def get_users():
         })
 
     return jsonify(users), 200
+
+@db_bp.route("/users/<int:user_id>", methods=["GET"])
+def get_user_by_id(user_id):
+    """Get a user record from the database by ID in a RESTful way."""
+    stmt = """
+        SELECT user_id, email, password_hash, first_name, last_name, created_at
+        FROM users
+        WHERE user_id = %s;
+    """
+
+    with get_connection() as conn:
+        with conn.cursor() as cur:
+            cur.execute(stmt, (user_id,))
+            row = cur.fetchone()
+
+    if row is None:
+        return jsonify({
+            "query result": "No user found"
+        }), 404
+
+    user = {
+        "user_id": row[0],
+        "email": row[1],
+        "password_hash": row[2],
+        "first_name": row[3],
+        "last_name": row[4],
+        "created_at": row[5]
+    }
+
+    return jsonify(user), 200
