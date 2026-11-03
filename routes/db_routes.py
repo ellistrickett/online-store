@@ -121,3 +121,68 @@ def get_user_by_id(user_id):
     }
 
     return jsonify(user), 200
+
+@db_bp.route("/users/<int:user_id>/update", methods=["GET", "PUT"])
+def update_user_by_id(user_id):
+    """Display or update a user's details by ID."""
+    if request.method == "GET":
+        # 1. Fetch current user from database
+        stmt = "SELECT user_id, email, password_hash, first_name, last_name FROM users WHERE user_id = %s;"
+        with get_connection() as conn:
+            with conn.cursor() as cur:
+                cur.execute(stmt, (user_id,))
+                row = cur.fetchone()
+
+        if row is None:
+            return "User not found", 404
+
+        # 2. Map row to dictionary
+        user = {
+            "user_id": row[0],
+            "email": row[1],
+            "password_hash": row[2],
+            "first_name": row[3],
+            "last_name": row[4]
+        }
+
+        # 3. Pass 'user=user' into the template
+        return render_template("user-update.html", user=user)
+
+    # Handle PUT request
+    data = request.get_json()
+    new_email = data.get("email")
+    new_password = data.get("password_hash")
+    new_first = data.get("first_name")
+    new_last = data.get("last_name")
+
+    if not all([new_email, new_password, new_first, new_last]):
+        return jsonify({
+            "message": "Email, password_hash, first_name, and last_name are all required."
+        }), 400
+
+    stmt = """
+        UPDATE users
+        SET email = %s, password_hash = %s, first_name = %s, last_name = %s
+        WHERE user_id = %s
+        RETURNING user_id, email, first_name, last_name;
+    """
+
+    with get_connection() as conn:
+        with conn.cursor() as cur:
+            cur.execute(stmt, (new_email, new_password, new_first, new_last, user_id))
+            row = cur.fetchone()
+        conn.commit()
+
+    if row is None:
+        return jsonify({
+            "message": "No user found or updated."
+        }), 404
+
+    updated_user = {
+        "user_id": row[0],
+        "email": row[1],
+        "first_name": row[2],
+        "last_name": row[3]
+    }
+
+    return jsonify(updated_user), 200
