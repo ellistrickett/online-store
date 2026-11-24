@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Update User Details</title>
+</head>
+<body>
+
+    <h1>Update User Details</h1>
+    <p>User ID: {{ user.user_id }}</p>
+
+    <form id="user-update-form">
+        <label for="email">Email:</label>
+        <input type="email" id="email" name="email" value="{{ user.email }}" required>
+        <br><br>
+
+        <label for="password_hash">Password Hash:</label>
+        <input type="text" id="password_hash" name="password_hash" value="{{ user.password_hash }}" required>
+        <br><br>
+
+        <label for="first_name">First Name:</label>
+        <input type="text" id="first_name" name="first_name" value="{{ user.first_name }}" required>
+        <br><br>
+
+        <label for="last_name">Last Name:</label>
+        <input type="text" id="last_name" name="last_name" value="{{ user.last_name }}" required>
+        <br><br>
+
+        <button type="submit">Update User</button>
+    </form>
+
+    <p id="message"></p>
+
+    <script>
+        const form = document.getElementById("user-update-form");
+        const message = document.getElementById("message");
+
+        form.addEventListener("submit", async function (event) {
+            event.preventDefault();
+
+            const email = document.getElementById("email").value;
+            const passwordHash = document.getElementById("password_hash").value;
+            const firstName = document.getElementById("first_name").value;
+            const lastName = document.getElementById("last_name").value;
+
+            const response = await fetch(
+                "/users/{{ user.user_id }}/update",
+                {
+                    method: "PUT",
+                    headers: {
+                        "Content-Type": "application/json"
+                    },
+                    body: JSON.stringify({
+                        email: email,
+                        password_hash: passwordHash,
+                        first_name: firstName,
+                        last_name: lastName
+                    })
+                }
+            );
+
+            const data = await response.json();
+
+            if (response.ok) {
+                message.textContent = `User updated successfully! Current Email: ${data.email}`;
+            } else {
+                message.textContent = data.message || "An error occurred.";
+            }
+        });
+    </script>
+
+</body>
+</html>
